@@ -1,0 +1,80 @@
+name: Build for test
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-APK:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+
+      - name: Install Flet
+        run: pip install flet==0.28.3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '3.29.2'
+
+      - name: Update Dart SDK
+        run: flutter upgrade
+
+      - name: Build APK
+        run: |
+          flet build apk
+          mv ./build/apk/app-release.apk ./build/apk/water.apk
+
+      - name: Upload apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: ./build/apk/water.apk
+  
+  build-IPA:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install Flet
+        run: pip install flet==0.19.0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '3.19.5'
+
+      - name: Update Dart SDK
+        run: flutter upgrade
+
+      - name: Build IPA
+        run: flet build ipa
+
+      - name: Convert xcarchive to ipa
+        run: |
+          cd ./build/ipa/Runner.xcarchive/Products
+          mv Applications Payload
+          zip -r Payload.zip Payload
+          mv Payload.zip water.ipa
+          pwd
+
+      - name: Upload ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipa
+          path: /Users/runner/work/dogshit/dogshit/build/ipa/Runner.xcarchive/Products/water.ipa
+
+  
